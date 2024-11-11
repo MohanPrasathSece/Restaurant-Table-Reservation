@@ -1,0 +1,9 @@
+//TableNotAvailableException Class
+
+package restaurant_management;
+
+public class TableNotAvailableException extends Exception {
+    public TableNotAvailableException(String message) {
+        super(message);
+    }
+}
