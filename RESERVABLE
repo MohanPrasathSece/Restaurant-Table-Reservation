@@ -1,0 +1,9 @@
+// RESERVABLE CLASS
+package restaurant_management;
+
+public interface Reservable {
+    void createReservation(int customerId, int tableId, String date, int partySize);
+    boolean checkAvailability(int tableId, String date);
+    void cancelReservation(int reservationId);
+    boolean checkTableExists(int tableId);
+}
