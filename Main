@@ -1,0 +1,115 @@
+// MAIN
+package restaurant_management;
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class Main {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/RestaurantManagement";
+    private static final String USER = "root";
+    private static final String PASSWORD = "0110";
+
+    public static void main(String[] args) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            Scanner scanner = new Scanner(System.in);
+            Reservation reservation = new Reservation(connection);
+
+            while (true) {
+                System.out.println("\nWelcome to the Restaurant Management System!");
+                System.out.println("1. Create Customer");
+                System.out.println("2. Make Reservation");
+                System.out.println("3. Check Table Availability");
+                System.out.println("4. Cancel Reservation");
+                System.out.println("5. Exit");
+                System.out.print("Choose an option: ");
+                
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        createCustomer(scanner, connection);
+                        break;
+                    case 2:
+                        makeReservation(scanner, reservation);
+                        break;
+                    case 3:
+                        checkTableAvailability(scanner, reservation);
+                        break;
+                    case 4:
+                        cancelReservation(scanner, reservation);
+                        break;
+                    case 5:
+                        System.out.println("Exiting system.");
+                        return;
+                    default:
+                        System.out.println("Invalid option.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createCustomer(Scanner scanner, Connection connection) {
+        System.out.print("Enter name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter email: ");
+        String email = scanner.nextLine();
+
+        try (PreparedStatement pstmt = connection.prepareStatement(
+                "INSERT INTO Customer (name, email) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.executeUpdate();
+
+            ResultSet rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                int customerId = rs.getInt(1);
+                System.out.println("Customer created with ID: " + customerId);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void makeReservation(Scanner scanner, Reservation reservation) {
+        System.out.print("Enter customer ID: ");
+        int customerId = scanner.nextInt();
+        System.out.print("Enter table ID: ");
+        int tableId = scanner.nextInt();
+        System.out.print("Enter reservation date (YYYY-MM-DD): ");
+        String date = scanner.next();
+        System.out.print("Enter party size: ");
+        int partySize = scanner.nextInt();
+
+        if (reservation.checkTableExists(tableId)) {
+            if (reservation.checkAvailability(tableId, date)) {
+                reservation.createReservation(customerId, tableId, date, partySize);
+            } else {
+                System.out.println("Table not available on this date.");
+            }
+        } else {
+            System.out.println("Invalid table ID.");
+        }
+    }
+
+    private static void checkTableAvailability(Scanner scanner, Reservation reservation) {
+        System.out.print("Enter table ID: ");
+        int tableId = scanner.nextInt();
+        System.out.print("Enter reservation date (YYYY-MM-DD): ");
+        String date = scanner.next();
+
+        if (reservation.checkAvailability(tableId, date)) {
+            System.out.println("Table is available.");
+        } else {
+            System.out.println("Table is not available.");
+        }
+    }
+
+    private static void cancelReservation(Scanner scanner, Reservation reservation) {
+        System.out.print("Enter reservation ID to cancel: ");
+        int reservationId = scanner.nextInt();
+        reservation.cancelReservation(reservationId);
+    }
+}
